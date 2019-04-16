@@ -1,17 +1,17 @@
 package com.revolut.rest;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.revolut.rest.StatusCode.*;
+import static com.revolut.rest.StatusCode.BAD_REQUEST;
+import static com.revolut.rest.StatusCode.METHOD_NOT_ALLOWED;
 
-public class PutHttpRequest extends HttpRequest {
+public class DeleteHttpRequest extends HttpRequest {
 
     private final Function<Map<String, String>, Response> processRequest;
 
-    public PutHttpRequest(Function<Map<String, String>, Response> processRequest){
+    public DeleteHttpRequest(Function<Map<String, String>, Response> processRequest) {
         this.processRequest = processRequest;
     }
 
@@ -20,19 +20,14 @@ public class PutHttpRequest extends HttpRequest {
             throw new RequestException("Request is null", BAD_REQUEST.getStatusCode());
 
         var method = request.getRequestMethod();
-        if(!method.equals(PUT_METHOD))
+        if(!method.equals(DELETE_METHOD))
             throw new RequestException("Method " + method + " not allowed.", METHOD_NOT_ALLOWED.getStatusCode());
 
-        final String params;
-        try {
-            params = new String(request.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RequestException("Unable to parse request body parameters.", BAD_REQUEST.getStatusCode());
+        var params = request.getRequestURI().getRawQuery();
+        if(params == null){
+            return "";
         }
-
-        if(params.isEmpty()){
-            throw new RequestException("The request parameters are empty.", BAD_REQUEST.getStatusCode());
-        }
+        params = java.net.URLDecoder.decode(params, StandardCharsets.UTF_8);
 
         return params;
     }
@@ -43,7 +38,7 @@ public class PutHttpRequest extends HttpRequest {
             final var params = parseRawInput(request);
             final var paramsMap = extractParams(params);
             return processRequest.apply(paramsMap);
-        } catch (RequestException e) {
+        } catch (HttpRequest.RequestException e) {
             return new Response() {
                 @Override
                 public String responseBody() {

@@ -26,7 +26,13 @@ public class AccountsLock {
     }
 
     private void unlock(AccountID accountID){
-        var lock = accountLocks.computeIfAbsent(accountID, id -> new ReentrantLock());
+        var lock = accountLocks.get(accountID);
+
+        if(lock == null)
+            return;
+
+        accountLocks.remove(accountID);
         lock.unlock();
+
     }
 }

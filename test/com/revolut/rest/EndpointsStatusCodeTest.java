@@ -1,9 +1,12 @@
 package com.revolut.rest;
 
 import com.revolut.account.AccountID;
+import com.revolut.account.AccountService;
 import com.revolut.account.Accounts;
-import com.revolut.account.TransferService;
-import com.revolut.transaction.TransactionID;
+import com.revolut.uuid.UUIDService;
+import com.revolut.history.HistoryService;
+import com.revolut.transfer.TransactionID;
+import com.revolut.transfer.TransferService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,10 +14,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.revolut.rest.HttpRequest.*;
+import static com.revolut.rest.StatusCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TransferServiceTest {
+public class EndpointsStatusCodeTest {
     private MockExternalService externalService;
 
     private TransactionID transactionID;
@@ -23,9 +26,13 @@ public class TransferServiceTest {
     private float amount;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws IOException, Accounts.AccountException {
         externalService = new MockExternalService();
-        TransferService transferService = new TransferService(new Accounts(), externalService, "/transfer");
+        var accounts = new Accounts();
+        TransferService transferService = new TransferService(accounts, externalService, "/transfer");
+        AccountService accountService = new AccountService(accounts, externalService, "/account");
+        HistoryService historyService = new HistoryService(accounts, externalService, "/history");
+        UUIDService uuidService = new UUIDService(externalService, "/uuid");
         externalService.start();
 
         transactionID = new TransactionID(UUID.randomUUID());
@@ -33,8 +40,11 @@ public class TransferServiceTest {
         toID = new AccountID(UUID.randomUUID());
         amount = 12.34F;
 
-        externalService.makeRequest("/transfer/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID));
-        externalService.makeRequest("/transfer/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+toID));
+        externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID));
+        externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+toID));
+
+        float depositAmount = 100F;
+        externalService.makeRequest("/transfer/deposit", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID+"&"+"amount="+depositAmount));
     }
 
     @AfterEach
@@ -48,16 +58,26 @@ public class TransferServiceTest {
                 .setMethod("PUT")
                 .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(OK, resp.statusCode());
+        assertEquals(OK.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void notSufficientFundsTest(){
+        float transferAmount = 100.01F;
+        Request mockRequest = new MockRequest()
+                .setMethod("PUT")
+                .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + transferAmount);
+        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void validTransactionsRequestStatusCodeTest() throws IOException, InterruptedException {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
-                .setQueryPath("/transfer/transactions?account_id="+fromID);
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(OK, resp.statusCode());
+                .setQueryPath("/history?account_id="+fromID);
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(OK.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -67,7 +87,7 @@ public class TransferServiceTest {
                 .setRequestBody("from="+fromID+"&to="+toID);
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -77,17 +97,17 @@ public class TransferServiceTest {
                 .setRequestBody("");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(BAD_REQUEST, resp.statusCode());
+        assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void invalidNestedMethodStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
-                .setQueryPath("/transfer/transactions/invalidMethod?param=12345");
+                .setQueryPath("/history/invalidMethod?param=12345");
 
-        Response resp = externalService.makeRequest("/transfer/transactions/invalidMethod", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        Response resp = externalService.makeRequest("/history/invalidMethod", mockRequest);
+        assertEquals(NOT_FOUND.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -97,17 +117,17 @@ public class TransferServiceTest {
                 .setQueryPath("/transfer/invalidMethod?param=12345");
 
         Response resp = externalService.makeRequest("/transfer/invalidMethod", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        assertEquals(NOT_FOUND.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void doubleEqualsGetStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
-                .setQueryPath("/transfer/transactions?param==12345");
+                .setQueryPath("/history?param==12345");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -117,17 +137,17 @@ public class TransferServiceTest {
                 .setRequestBody("param==12345");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void anEmptyParamGetStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
-                .setQueryPath("/transfer/transactions?param=12345&");
+                .setQueryPath("/history?param=12345&");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -137,17 +157,17 @@ public class TransferServiceTest {
                 .setRequestBody("param=12345&");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void emptyParamGetStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
-                .setQueryPath("/transfer/transactions?&");
+                .setQueryPath("/history?&");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -157,7 +177,7 @@ public class TransferServiceTest {
                 .setRequestBody("&");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(NOT_ACCEPTABLE_FORMAT, resp.statusCode());
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -167,7 +187,7 @@ public class TransferServiceTest {
                 .setRequestBody("");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(BAD_REQUEST, resp.statusCode());
+        assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -175,8 +195,8 @@ public class TransferServiceTest {
         Request mockRequest = new MockRequest()
                 .setMethod("PUT");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -184,8 +204,8 @@ public class TransferServiceTest {
         Request mockRequest = new MockRequest()
                 .setMethod("POST");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -193,8 +213,8 @@ public class TransferServiceTest {
         Request mockRequest = new MockRequest()
                 .setMethod("DELETE");
 
-        Response resp = externalService.makeRequest("/transfer/transactions", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -203,7 +223,7 @@ public class TransferServiceTest {
                 .setMethod("GET");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
     @Test
@@ -212,6 +232,6 @@ public class TransferServiceTest {
                 .setMethod("POST");
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
-        assertEquals(METHOD_NOT_ALLOWED, resp.statusCode());
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 }

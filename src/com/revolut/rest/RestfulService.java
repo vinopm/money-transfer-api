@@ -1,21 +1,30 @@
 package com.revolut.rest;
 
+import com.revolut.account.AccountService;
 import com.revolut.account.Accounts;
-import com.revolut.account.TransferService;
+import com.revolut.history.HistoryService;
+import com.revolut.transfer.TransferService;
+import com.revolut.uuid.UUIDService;
 
 import java.io.IOException;
 
 public class RestfulService {
     RestfulService(int port) throws IOException {
-        Accounts accounts = new Accounts();
+        var accounts = new Accounts();
 
-        HttpService httpService = new HttpService(port);
+        var httpService = new HttpService(port);
 
-        TransferService transferService = new TransferService(accounts, httpService, "/transfer");
+        // List of all services
+        new TransferService(accounts, httpService, "/transfer");
+        new AccountService(accounts, httpService, "/account");
+        new HistoryService(accounts, httpService, "/history");
+        new UUIDService(httpService, "/uuid");
         // Additional services to be defined here.
+
+        httpService.start();
+
     }
     public static void main(String[] args) throws IOException, InterruptedException {
-        new RestfulService(10000);
-        Thread.sleep(Long.MAX_VALUE);
+        new RestfulService(65456);
     }
 }

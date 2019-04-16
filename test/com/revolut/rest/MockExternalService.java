@@ -3,7 +3,7 @@ package com.revolut.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.revolut.rest.HttpRequest.METHOD_NOT_ALLOWED;
+import static com.revolut.rest.StatusCode.*;
 
 public class MockExternalService implements ExternalService {
     private final Map<String, RequestProcessor> mapOfServices = new HashMap<>();
@@ -28,7 +28,7 @@ public class MockExternalService implements ExternalService {
         mapOfServices.clear();
     }
 
-    Response makeRequest(String path, Request requestParameters){
+    public Response makeRequest(String path, Request requestParameters){
         if(!running)
             throw new IllegalStateException("Mock service is not running.");
 
@@ -40,7 +40,7 @@ public class MockExternalService implements ExternalService {
 
             @Override
             public int statusCode() {
-                return METHOD_NOT_ALLOWED;
+                return NOT_FOUND.getStatusCode();
             }
         });
         return processor.processRequest(requestParameters);

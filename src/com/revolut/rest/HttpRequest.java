@@ -11,23 +11,17 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public abstract class HttpRequest implements HttpHandler, RequestProcessor {
+import static com.revolut.rest.StatusCode.NOT_ACCEPTABLE_FORMAT;
+
+abstract class HttpRequest implements HttpHandler, RequestProcessor {
     static final String POST_METHOD = "POST";
     static final String GET_METHOD = "GET";
     static final String PUT_METHOD = "PUT";
     static final String DELETE_METHOD = "DELETE";
-
-    public static final int OK = 200;
-    public static final int BAD_REQUEST = 400;
-    public static final int NOT_FOUND = 404;
-    public static final int METHOD_NOT_ALLOWED = 405;
-    public static final int NOT_ACCEPTABLE_FORMAT = 406;
-    public static final int INTERNAL_SERVER_ERROR = 500;
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -77,5 +71,43 @@ public abstract class HttpRequest implements HttpHandler, RequestProcessor {
                 return exchange.getRemoteAddress();
             }
         };
+    }
+
+    Map<String, String> extractParams(String input) throws RequestException {
+        if (input == null || input.isEmpty())
+            return new HashMap<>();
+
+        var list = Arrays.stream(input.split("&"))
+                .map(p -> p.split("="))
+                .collect(Collectors.toList());
+
+        var map = list.stream()
+                .filter(s -> s.length == 2)
+                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+
+        var map1 = list.stream()
+                .filter(s -> s.length == 1)
+                .collect(Collectors.toMap(x -> x[0], x -> ""));
+
+        var invalidParams = list.stream()
+                .filter(s -> s.length > 2)
+                .count();
+
+        if (invalidParams > 0){
+            throw new RequestException("Parameters of request are in invalid format.", NOT_ACCEPTABLE_FORMAT.getStatusCode());
+        }
+
+        map.putAll(map1);
+        return map;
+    }
+
+    class RequestException extends Exception {
+        String s;
+        int statusCode;
+        RequestException(String s, int code) {
+            super(code + " " + s);
+            this.s = s;
+            this.statusCode = code;
+        }
     }
 }

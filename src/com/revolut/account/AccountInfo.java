@@ -1,27 +1,34 @@
 package com.revolut.account;
 
-import com.revolut.transaction.Transaction;
-import com.revolut.transaction.TransactionID;
+import com.revolut.transfer.Transaction;
+import com.revolut.transfer.TransactionID;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AccountInfo {
-    private final AccountBalance balance;
+    private float balance;
     private final Map<TransactionID, Transaction> transactionsMap;
 
-    AccountInfo(AccountBalance balance, Map<TransactionID, Transaction> transactionMap){
+    AccountInfo(float balance, Map<TransactionID, Transaction> transactionMap){
         this.balance = balance;
         this.transactionsMap = transactionMap;
     }
 
     AccountInfo(){
-        this.balance = new AccountBalance();
         this.transactionsMap = new HashMap<>();
     }
 
-    AccountBalance getBalance(){
+    void add(float amount){
+        this.balance += amount;
+    }
+
+    void minus(float amount){
+        this.balance -= amount;
+    }
+
+    float getBalance(){
         return balance;
     }
 

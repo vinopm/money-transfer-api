@@ -1,4 +1,4 @@
-package com.revolut.transaction;
+package com.revolut.transfer;
 
 import com.revolut.account.AccountID;
 

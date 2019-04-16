@@ -14,7 +14,7 @@ public class HttpService implements ExternalService {
     private final HttpServer httpServer;
     private final Map<String, HttpContext> endpoints = new ConcurrentHashMap<>();
 
-    HttpService(int port) throws IOException {
+    public HttpService(int port) throws IOException {
         this.httpServer = HttpServer.create(new InetSocketAddress(port), 0);
         this.httpServer.setExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> httpServer.stop(0)));
@@ -34,8 +34,8 @@ public class HttpService implements ExternalService {
     public void createEndpoint(String path, RequestProcessor processor) {
         final var endPoint = httpServer.createContext(path, new HttpRequest() {
             @Override
-            public Response processRequest(Request s) {
-                return processor.processRequest(s);
+            public Response processRequest(Request req) {
+                return processor.processRequest(req);
             }
         });
         endpoints.put(path, endPoint);

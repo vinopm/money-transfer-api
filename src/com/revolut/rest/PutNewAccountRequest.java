@@ -1,21 +1,18 @@
-package com.revolut.account;
+package com.revolut.rest;
 
-import com.revolut.rest.PutHttpRequest;
-import com.revolut.rest.Request;
-import com.revolut.rest.RequestProcessor;
-import com.revolut.rest.Response;
+import com.revolut.account.AccountID;
+import com.revolut.account.Accounts;
 
 import java.util.Map;
 import java.util.UUID;
 
-import static com.revolut.rest.HttpRequest.BAD_REQUEST;
-import static com.revolut.rest.HttpRequest.OK;
+import static com.revolut.rest.StatusCode.*;
 
-public class PutAccountRequest implements RequestProcessor {
+public class PutNewAccountRequest implements RequestProcessor {
     private final Accounts accounts;
     private final PutHttpRequest putHttpRequestHandler;
 
-    public PutAccountRequest(Accounts accounts) {
+    public PutNewAccountRequest(Accounts accounts) {
         this.accounts = accounts;
         this.putHttpRequestHandler = new PutHttpRequest(this::handleCreationRequest);
     }
@@ -37,7 +34,7 @@ public class PutAccountRequest implements RequestProcessor {
 
                 @Override
                 public int statusCode() {
-                    return BAD_REQUEST;
+                    return BAD_REQUEST.getStatusCode();
                 }
             };
         }
@@ -52,7 +49,7 @@ public class PutAccountRequest implements RequestProcessor {
 
             @Override
             public int statusCode() {
-                return OK;
+                return OK.getStatusCode();
             }
         };
     }

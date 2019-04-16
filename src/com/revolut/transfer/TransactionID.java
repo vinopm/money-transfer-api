@@ -1,4 +1,4 @@
-package com.revolut.transaction;
+package com.revolut.transfer;
 
 import java.util.UUID;
 

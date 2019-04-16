@@ -1,13 +1,13 @@
 package com.revolut.account;
 
-import com.revolut.transaction.Transaction;
-import com.revolut.transaction.TransactionID;
+import com.revolut.transfer.Transaction;
+import com.revolut.transfer.TransactionID;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.revolut.rest.HttpRequest.BAD_REQUEST;
+import static com.revolut.rest.StatusCode.*;
 
 public class Accounts {
     private final Map<AccountID, AccountInfo> accounts = new ConcurrentHashMap<>();
@@ -21,20 +21,20 @@ public class Accounts {
         accountsLock.lock(accountID);
 
         try {
-            accounts.put(accountID, new AccountInfo());
+            accounts.putIfAbsent(accountID, new AccountInfo());
         }finally {
             accountsLock.unlock(accountID);
         }
     }
 
-    Collection<Transaction> transactions(AccountID accountID) throws AccountException {
+    public Collection<Transaction> transactions(AccountID accountID) throws AccountException {
         accountsLock.lock(accountID);
 
         try{
             var account = accounts.get(accountID);
 
             if(account == null)
-                throw new AccountException("Accounts does not exist");
+                throw new AccountException("Accounts does not exist", BAD_REQUEST.getStatusCode());
 
             return account.getAllTransactions();
         }finally {
@@ -43,7 +43,7 @@ public class Accounts {
 
     }
 
-    Transaction transfer(TransactionID transactionID, AccountID from, AccountID to, float amount) throws AccountException {
+    public Transaction transfer(TransactionID transactionID, AccountID from, AccountID to, float amount) throws AccountException {
         accountsLock.lock(from, to);
 
         try{
@@ -51,11 +51,11 @@ public class Accounts {
             var toAccountInfo = accounts.get(to);
 
             if(fromAccountInfo == null|| toAccountInfo == null){
-                throw new AccountException("Accounts does not exist", BAD_REQUEST);
+                throw new AccountException("Accounts does not exist", BAD_REQUEST.getStatusCode());
             }
 
             if(from.equals(to)) {
-                throw new AccountException("From and to accounts are identical.", BAD_REQUEST);
+                throw new AccountException("From and to accounts are identical.", BAD_REQUEST.getStatusCode());
             }
 
             var alreadyExecuted = fromAccountInfo.getTransaction(transactionID);
@@ -64,27 +64,121 @@ public class Accounts {
                 return alreadyExecuted;
             }
 
+            //check if from account has enough funds for transfer
+            var fromAmount = fromAccountInfo.getBalance();
+            if(amount > fromAmount){
+                throw new AccountException("Account does not have enough funds for transfer.", BAD_REQUEST.getStatusCode());
+            }
+
             //execute the transfer
             var newTransaction = new Transaction(transactionID, from, to, amount);
             fromAccountInfo.addNewTransaction(transactionID, newTransaction);
-            fromAccountInfo.getBalance().minus(amount);
+            fromAccountInfo.minus(amount);
             toAccountInfo.addNewTransaction(transactionID, newTransaction);
-            toAccountInfo.getBalance().add(amount);
+            toAccountInfo.add(amount);
             return newTransaction;
         }finally {
             accountsLock.unlock(from, to);
         }
     }
 
-    class AccountException extends Exception {
-        String msg;
-        int code;
+    public void deposit(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+        if(amount <= 0){
+            throw new AccountException("Deposit amount must be greater than 0", BAD_REQUEST.getStatusCode());
+        }
+
+        accountsLock.lock(accountID);
+
+        try{
+            depositWithoutLocking(transactionID, accountID, amount);
+        }
+        finally {
+            accountsLock.unlock(accountID);
+        }
+    }
+
+    private void depositWithoutLocking(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+        var account = accounts.get(accountID);
+
+        if(account == null)
+            throw new AccountException("Account does not exist.");
+
+        var alreadyExecuted = account.getTransaction(transactionID);
+
+        if(alreadyExecuted != null){
+            return;
+        }
+
+        account.add(amount);
+    }
+
+    public void withdraw(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+        if(amount <= 0){
+            throw new AccountException("Withdraw amount must be greater than 0", BAD_REQUEST.getStatusCode());
+        }
+
+        accountsLock.lock(accountID);
+
+        try{
+            withdrawWithoutLocking(transactionID, accountID, amount);
+        }
+        finally {
+            accountsLock.unlock(accountID);
+        }
+    }
+
+    private void withdrawWithoutLocking(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+        AccountInfo account = accounts.get(accountID);
+
+        if(account == null)
+            throw new AccountException("Account does not exist.", BAD_REQUEST.getStatusCode());
+
+        if(amount > getBalance(accountID))
+            throw new AccountException("Account does not have sufficient funds to withdraw.", BAD_REQUEST.getStatusCode());
+
+        account.minus(amount);
+    }
+
+    public void deleteAccount(AccountID accountID) throws AccountException {
+        accountsLock.lock(accountID);
+        try{
+            AccountInfo account = accounts.get(accountID);
+
+            if(account == null)
+                throw new AccountException("Account does not exist", BAD_REQUEST.getStatusCode());
+
+            //@TODO
+//            accounts.remove(accountID);
+        }finally {
+            accountsLock.unlock(accountID);
+        }
+    }
+
+    float getBalance(AccountID accountID) throws AccountException {
+        accountsLock.lock(accountID);
+        try{
+            AccountInfo account = accounts.get(accountID);
+
+            if(account == null)
+                throw new AccountException("Account does not exist", BAD_REQUEST.getStatusCode());
+
+            return account.getBalance();
+        }finally {
+            accountsLock.unlock(accountID);
+        }
+    }
+
+    public class AccountException extends Exception {
+        public String msg;
+        public int code;
         AccountException(String msg, int code){
             this.msg = msg;
             this.code = code;
         }
         public AccountException(String s) {
             super(s);
+            this.msg = s;
+            this.code = INTERNAL_SERVER_ERROR.getStatusCode();
         }
     }
 }
