@@ -4,6 +4,9 @@ Dependencies: Only JUnit for unit tests, and Maven for building.
 
 Maven pom.xml file configurable to change port number of RESTful service. Default set to: 65457.
 
+GET & DELETE methods pass parameters through URI
+PUT methods pass parameters in request body with format: application/x-www-form-urlencoded
+
 RESTful Endpoints:
 - Transfer (/transfer)
     - Create (/transfer/create) accepts PUT
