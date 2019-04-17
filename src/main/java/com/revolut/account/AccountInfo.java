@@ -3,6 +3,7 @@ package com.revolut.account;
 import com.revolut.transfer.Transaction;
 import com.revolut.transfer.TransactionID;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,7 +33,7 @@ class AccountInfo {
     }
 
     Collection<Transaction> getAllTransactions(){
-        return transactionsMap.values();
+        return new ArrayList<>(transactionsMap.values());
     }
 
     void addNewTransaction(TransactionID id, Transaction transaction){
