@@ -49,10 +49,10 @@ RESTful Endpoints:
         - Description: Endpoint which generates a UUID which can be then used to create transfer requests. The idea is to call this endpoint before requesting a transfer API. In cases where a connection is dropped after making the request, the client can send the request again with the unique transaction UUID. The RESTful service would know if this transaction has already been processed and would respond to the client appropriately.
         
  List of response status codes:
-    - OK --> 200
-    - BAD_REQUEST --> 400
-    - NOT_FOUND --> 404
-    - METHOD_NOT_ALLOWED --> 405
-    - NOT_ACCEPTABLE_FORMAT --> 406
-    - INTERNAL_SERVER_ERROR --> 500
+    OK = 200, BAD_REQUEST = 400, NOT_FOUND = 404, METHOD_NOT_ALLOWED = 405, NOT_ACCEPTABLE_FORMAT = 406, INTERNAL_SERVER_ERROR = 500
 
+To run the application:
+mvn install
+mvn exec:Java
+
+(Please note when running: may need to increase default Xmx heap size as data is stored in memory for this implementation).
