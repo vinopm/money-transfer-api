@@ -84,12 +84,12 @@ public class Money implements Comparable<Money>{
         return Long.hashCode(pennies);
     }
 
-    public Money add(Money money){
+    Money add(Money money){
         var added = this.pennies + money.pennies;
         return new Money(added);
     }
 
-    public Money minus(Money money){
+    Money minus(Money money){
         var substracted = this.pennies - money.pennies;
         return new Money(substracted);
     }

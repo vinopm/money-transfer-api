@@ -26,9 +26,9 @@ public class PutWithdrawAccountRequest implements RequestProcessor {
     }
 
     private Response handleWithdrawRequest(Map<String, String> params) {
-        String transactionID = params.get("transaction_id");
-        String accountID = params.get("account_id");
-        String amount = params.get("amount");
+        var transactionID = params.get("transaction_id");
+        var accountID = params.get("account_id");
+        var amount = params.get("amount");
 
         if(transactionID == null || transactionID.isEmpty() || accountID == null || accountID.isEmpty() || amount == null || amount.isEmpty()){
             return new Response() {

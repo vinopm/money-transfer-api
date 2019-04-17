@@ -19,7 +19,7 @@ public class GetAccountHistoryRequest implements RequestProcessor {
     private final Accounts accounts;
     private final GetHttpRequest getHttpRequestHandler;
 
-    public GetAccountHistoryRequest(Accounts accounts) {
+    GetAccountHistoryRequest(Accounts accounts) {
         this.accounts = accounts;
         this.getHttpRequestHandler = new GetHttpRequest(this::handleRequest);
     }
@@ -30,7 +30,7 @@ public class GetAccountHistoryRequest implements RequestProcessor {
     }
 
     private Response handleRequest(Map<String, String> params) {
-        String accountID = params.get("account_id");
+        var accountID = params.get("account_id");
 
         if(accountID == null || accountID.isEmpty())
             return new Response() {
@@ -58,18 +58,6 @@ public class GetAccountHistoryRequest implements RequestProcessor {
                 @Override
                 public int statusCode() {
                     return e.code;
-                }
-            };
-        } catch (IllegalArgumentException e){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.getMessage();
-                }
-
-                @Override
-                public int statusCode() {
-                    return BAD_REQUEST.getStatusCode();
                 }
             };
         } catch (Exception e){

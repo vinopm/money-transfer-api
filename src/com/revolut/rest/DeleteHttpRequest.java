@@ -11,7 +11,7 @@ public class DeleteHttpRequest extends HttpRequest {
 
     private final Function<Map<String, String>, Response> processRequest;
 
-    public DeleteHttpRequest(Function<Map<String, String>, Response> processRequest) {
+    DeleteHttpRequest(Function<Map<String, String>, Response> processRequest) {
         this.processRequest = processRequest;
     }
 

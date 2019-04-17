@@ -4,7 +4,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpContext;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -15,17 +14,19 @@ public class MockRequest implements Request {
     private String requestBody;
     private String method;
 
-    public MockRequest setQueryPath(String queryPath){
+    private static final int testPort = 10000;
+
+    MockRequest setQueryPath(String queryPath){
         this.queryPath = queryPath;
         return this;
     }
 
-    public MockRequest setRequestBody(String requestBody){
+    MockRequest setRequestBody(String requestBody){
         this.requestBody = requestBody;
         return this;
     }
 
-    public MockRequest setMethod(String method){
+    MockRequest setMethod(String method){
         this.method = method;
         return this;
     }
@@ -37,7 +38,7 @@ public class MockRequest implements Request {
 
     @Override
     public URI getRequestURI() {
-        return URI.create("http://localhost:10000" + queryPath);
+        return URI.create("http://localhost:"+ testPort + queryPath);
     }
 
     @Override

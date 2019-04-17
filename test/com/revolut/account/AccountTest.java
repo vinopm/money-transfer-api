@@ -171,7 +171,7 @@ class AccountTest {
         assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("500.00")));
     }
 
-    public TransactionID generateTransactionID(){
+    TransactionID generateTransactionID(){
         var transactionUUID = UUID.randomUUID();
         return new TransactionID(transactionUUID);
     }

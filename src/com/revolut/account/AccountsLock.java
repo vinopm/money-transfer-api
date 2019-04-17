@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class AccountsLock {
+class AccountsLock {
     private final Map<AccountID, Lock> accountLocks = new ConcurrentHashMap<>();
 
     void lock(AccountID... accountIDs){

@@ -26,9 +26,9 @@ public class PutDepositAccountRequest implements RequestProcessor {
     }
 
     private Response handleDepositRequest(Map<String, String> params) {
-        String transaction_id = params.get("transaction_id");
-        String accountID = params.get("account_id");
-        String amount = params.get("amount");
+        var transaction_id = params.get("transaction_id");
+        var accountID = params.get("account_id");
+        var amount = params.get("amount");
 
         if(transaction_id == null || transaction_id.isEmpty() || accountID == null || accountID.isEmpty() || amount == null || amount.isEmpty()){
             return new Response() {

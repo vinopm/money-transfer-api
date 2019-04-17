@@ -7,9 +7,7 @@ import com.revolut.transfer.Transaction;
 import com.revolut.transfer.TransactionID;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,14 +33,14 @@ class HistoryTest {
         assertEquals(2, transactionsAccount2.size());
 
         {
-            Transaction[] transactions = transactionsAccount1.toArray(new Transaction[0]);
+            var transactions = transactionsAccount1.toArray(new Transaction[0]);
 
-            Transaction firstTransaction = transactions[0];
+            var firstTransaction = transactions[0];
             assertTrue(firstTransaction.toString().contains("account="+accountID1));
             assertTrue(firstTransaction.toString().contains("amount="+"10.00"));
             assertTrue(firstTransaction.toString().contains("deposit"));
 
-            Transaction secondTransaction = transactions[1];
+            var secondTransaction = transactions[1];
             assertTrue(secondTransaction.toString().contains("from="+accountID1));
             assertTrue(secondTransaction.toString().contains("to="+accountID2));
             assertTrue(secondTransaction.toString().contains("amount="+"10.00"));
@@ -50,15 +48,15 @@ class HistoryTest {
         }
 
         {
-            Transaction[] transactions = transactionsAccount2.toArray(new Transaction[0]);
+            var transactions = transactionsAccount2.toArray(new Transaction[0]);
 
-            Transaction firstTransaction = transactions[0];
+            var firstTransaction = transactions[0];
             assertTrue(firstTransaction.toString().contains("from="+accountID1));
             assertTrue(firstTransaction.toString().contains("to="+accountID2));
             assertTrue(firstTransaction.toString().contains("amount="+"10.00"));
             assertTrue(firstTransaction.toString().contains("transfer"));
 
-            Transaction secondTransaction = transactions[1];
+            var secondTransaction = transactions[1];
             assertTrue(secondTransaction.toString().contains("account="+accountID2));
             assertTrue(secondTransaction.toString().contains("amount="+"10.00"));
             assertTrue(secondTransaction.toString().contains("withdraw"));

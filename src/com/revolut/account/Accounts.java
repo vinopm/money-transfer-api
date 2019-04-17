@@ -132,7 +132,7 @@ public class Accounts {
     }
 
     private void withdrawWithoutLocking(TransactionID transactionID, AccountID accountID, Money amount) throws AccountException {
-        AccountInfo account = accounts.get(accountID);
+        var account = accounts.get(accountID);
 
         if(account == null)
             throw new AccountException("Account does not exist.", BAD_REQUEST.getStatusCode());
@@ -149,7 +149,7 @@ public class Accounts {
     public void deleteAccount(AccountID accountID) throws AccountException {
         accountsLock.lock(accountID);
         try{
-            AccountInfo account = accounts.get(accountID);
+            var account = accounts.get(accountID);
 
             if(account == null)
                 throw new AccountException("Account does not exist", BAD_REQUEST.getStatusCode());
@@ -163,7 +163,7 @@ public class Accounts {
     Money getBalance(AccountID accountID) throws AccountException {
         accountsLock.lock(accountID);
         try{
-            AccountInfo account = accounts.get(accountID);
+            var account = accounts.get(accountID);
 
             if(account == null)
                 throw new AccountException("Account does not exist", BAD_REQUEST.getStatusCode());
@@ -181,7 +181,7 @@ public class Accounts {
             this.msg = msg;
             this.code = code;
         }
-        public AccountException(String s) {
+        AccountException(String s) {
             super(s);
             this.msg = s;
             this.code = INTERNAL_SERVER_ERROR.getStatusCode();

@@ -11,13 +11,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import static com.revolut.rest.StatusCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EndpointsStatusCodeTest {
+class EndpointsStatusCodeTest {
     private MockExternalService externalService;
 
     private TransactionID transactionID;
@@ -26,13 +25,13 @@ public class EndpointsStatusCodeTest {
     private String amount;
 
     @BeforeEach
-    void setUp() throws IOException, Accounts.AccountException {
+    void setUp() {
         externalService = new MockExternalService();
         var accounts = new Accounts();
-        TransferService transferService = new TransferService(accounts, externalService, "/transfer");
-        AccountService accountService = new AccountService(accounts, externalService, "/account");
-        HistoryService historyService = new HistoryService(accounts, externalService, "/history");
-        UUIDService uuidService = new UUIDService(externalService, "/uuid");
+        new TransferService(accounts, externalService, "/transfer");
+        new AccountService(accounts, externalService, "/account");
+        new HistoryService(accounts, externalService, "/history");
+        new UUIDService(externalService, "/uuid");
         externalService.start();
 
         transactionID = new TransactionID(UUID.randomUUID());
@@ -43,60 +42,60 @@ public class EndpointsStatusCodeTest {
         externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID));
         externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+toID));
 
-        String depositAmount = "100.00";
+        var depositAmount = "100.00";
         externalService.makeRequest("/transfer/deposit", new MockRequest().setMethod("PUT").setRequestBody("transaction_id="+UUID.randomUUID().toString()+"&account_id="+fromID+"&"+"amount="+depositAmount));
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         externalService.stop();
     }
 
     @Test
-    void validCreateRequestStatusCodeTest() throws IOException, InterruptedException {
+    void validCreateRequestStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(OK.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void notSufficientFundsTest(){
-        float transferAmount = 100.01F;
+        var transferAmount = "100.01";
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + transferAmount);
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
     @Test
-    void validTransactionsRequestStatusCodeTest() throws IOException, InterruptedException {
+    void validTransactionsRequestStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
                 .setQueryPath("/history?account_id="+fromID);
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(OK.getStatusCode(), resp.statusCode());
     }
 
     @Test
-    void partialParamsStatusCodeTest() throws IOException, InterruptedException {
+    void partialParamsStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("from="+fromID+"&to="+toID);
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
-    void emptyRequestStatusCodeTest() throws IOException, InterruptedException {
+    void emptyRequestStatusCodeTest() {
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
@@ -106,7 +105,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("GET")
                 .setQueryPath("/history/invalidMethod?param=12345");
 
-        Response resp = externalService.makeRequest("/history/invalidMethod", mockRequest);
+        var resp = externalService.makeRequest("/history/invalidMethod", mockRequest);
         assertEquals(NOT_FOUND.getStatusCode(), resp.statusCode());
     }
 
@@ -116,7 +115,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("GET")
                 .setQueryPath("/transfer/invalidMethod?param=12345");
 
-        Response resp = externalService.makeRequest("/transfer/invalidMethod", mockRequest);
+        var resp = externalService.makeRequest("/transfer/invalidMethod", mockRequest);
         assertEquals(NOT_FOUND.getStatusCode(), resp.statusCode());
     }
 
@@ -126,7 +125,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("GET")
                 .setQueryPath("/history?param==12345");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -136,7 +135,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("PUT")
                 .setRequestBody("param==12345");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -146,7 +145,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("GET")
                 .setQueryPath("/history?param=12345&");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -156,7 +155,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("PUT")
                 .setRequestBody("param=12345&");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -166,7 +165,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("GET")
                 .setQueryPath("/history?&");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -176,7 +175,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("PUT")
                 .setRequestBody("&");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
@@ -186,7 +185,7 @@ public class EndpointsStatusCodeTest {
                 .setMethod("PUT")
                 .setRequestBody("");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(BAD_REQUEST.getStatusCode(), resp.statusCode());
     }
 
@@ -195,7 +194,7 @@ public class EndpointsStatusCodeTest {
         Request mockRequest = new MockRequest()
                 .setMethod("PUT");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
@@ -204,7 +203,7 @@ public class EndpointsStatusCodeTest {
         Request mockRequest = new MockRequest()
                 .setMethod("POST");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
@@ -213,7 +212,7 @@ public class EndpointsStatusCodeTest {
         Request mockRequest = new MockRequest()
                 .setMethod("DELETE");
 
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
@@ -222,7 +221,7 @@ public class EndpointsStatusCodeTest {
         Request mockRequest = new MockRequest()
                 .setMethod("GET");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
@@ -231,37 +230,37 @@ public class EndpointsStatusCodeTest {
         Request mockRequest = new MockRequest()
                 .setMethod("POST");
 
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void transferInvalidTransactionIDTest(){
-        final String transactionID = "garbage-id";
+        final var transactionID = "garbage-id";
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void transferInvalidAccountIDTest(){
-        final String fromID = "garbage-id";
+        final var fromID = "garbage-id";
         Request mockRequest = new MockRequest()
                 .setMethod("PUT")
                 .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
-        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        var resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
     @Test
     void historyInvalidAccountIDTest(){
-        final String accountID = "garbage-id";
+        final var accountID = "garbage-id";
         Request mockRequest = new MockRequest()
                 .setMethod("GET")
                 .setQueryPath("account_id="+accountID);
-        Response resp = externalService.makeRequest("/history", mockRequest);
+        var resp = externalService.makeRequest("/history", mockRequest);
         assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
     }
 
