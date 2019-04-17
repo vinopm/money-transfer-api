@@ -160,7 +160,7 @@ public class Accounts {
         }
     }
 
-    Money getBalance(AccountID accountID) throws AccountException {
+    public Money getBalance(AccountID accountID) throws AccountException {
         accountsLock.lock(accountID);
         try{
             var account = accounts.get(accountID);

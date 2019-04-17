@@ -290,4 +290,14 @@ class EndpointsStatusCodeTest {
         var resp = externalService.makeRequest("/account/delete", mockRequest);
         assertEquals(OK.getStatusCode(), resp.statusCode());
     }
+
+    @Test
+    void getBalanceTest(){
+        Request mockRequest = new MockRequest()
+                .setMethod("GET")
+                .setQueryPath("/account/balance?account_id="+fromID);
+        var resp = externalService.makeRequest("/account/balance", mockRequest);
+        assertEquals(OK.getStatusCode(), resp.statusCode());
+        assertEquals("100.00", resp.responseBody());
+    }
 }
