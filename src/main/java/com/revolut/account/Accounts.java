@@ -63,6 +63,10 @@ public class Accounts {
                 return alreadyExecuted;
             }
 
+            //check if transfer amount is <= 0
+            if(amount.compareTo(new Money("0.00")) <= 0)
+                throw new AccountException("Transfer amount is not greater than 0.00", BAD_REQUEST.getStatusCode());
+
             //check if from account has enough funds for transfer
             var fromAmount = fromAccountInfo.getBalance();
             if(amount.compareTo(fromAmount) > 0){

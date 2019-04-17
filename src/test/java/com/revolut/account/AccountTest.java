@@ -172,6 +172,18 @@ class AccountTest {
         assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("500.00")));
     }
 
+    @Test
+    void negativeTransferTest() {
+        var transactionID = generateTransactionID();
+        assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("-5.00")));
+    }
+
+    @Test
+    void zeroTransferTest() {
+        var transactionID = generateTransactionID();
+        assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("0.00")));
+    }
+
     TransactionID generateTransactionID(){
         var transactionUUID = UUID.randomUUID();
         return new TransactionID(transactionUUID);
