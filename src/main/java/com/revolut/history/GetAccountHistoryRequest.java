@@ -2,10 +2,12 @@ package com.revolut.history;
 
 import com.revolut.account.AccountID;
 import com.revolut.account.Accounts;
+import com.revolut.account.Accounts.AccountException;
 import com.revolut.rest.GetHttpRequest;
 import com.revolut.rest.Request;
 import com.revolut.rest.RequestProcessor;
 import com.revolut.rest.Response;
+import com.revolut.rest.ResponseIF;
 import com.revolut.transfer.Transaction;
 
 import java.util.Arrays;
@@ -25,67 +27,25 @@ public class GetAccountHistoryRequest implements RequestProcessor {
     }
 
     @Override
-    public Response processRequest(Request req) {
+    public ResponseIF processRequest(Request req) {
         return getHttpRequestHandler.processRequest(req);
     }
 
-    private Response handleRequest(Map<String, String> params) {
+    private ResponseIF handleRequest(Map<String, String> params) {
         var accountID = params.get("account_id");
 
         if(accountID == null || accountID.isEmpty())
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return "Parameters are in invalid format.";
-                }
-
-                @Override
-                public int statusCode() {
-                    return NOT_ACCEPTABLE_FORMAT.getStatusCode();
-                }
-            };
+            return new Response("Parameters are in invalid format.", NOT_ACCEPTABLE_FORMAT);
 
         final Collection<Transaction> transactions;
         try {
             transactions = accounts.transactions(new AccountID(UUID.fromString(accountID)));
-        } catch (Accounts.AccountException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.msg;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.code;
-                }
-            };
+        } catch (AccountException e) {
+            return new Response(e.msg, e.code);
         } catch (Exception e){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.getMessage();
-                }
-
-                @Override
-                public int statusCode() {
-                    return BAD_REQUEST.getStatusCode();
-                }
-            };
+            return new Response(e.getMessage(), BAD_REQUEST);
         }
 
-        return new Response() {
-            @Override
-            public String responseBody() {
-                return Arrays.toString(transactions.toArray());
-            }
-
-            @Override
-            public int statusCode() {
-                return OK.getStatusCode();
-            }
-        };
+        return new Response(Arrays.toString(transactions.toArray()), OK);
     }
-
-
 }

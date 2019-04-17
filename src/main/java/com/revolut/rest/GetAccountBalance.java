@@ -2,6 +2,7 @@ package com.revolut.rest;
 
 import com.revolut.account.AccountID;
 import com.revolut.account.Accounts;
+import com.revolut.account.Accounts.AccountException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -19,54 +20,24 @@ public class GetAccountBalance implements RequestProcessor {
     }
 
     @Override
-    public Response processRequest(Request s) {
+    public ResponseIF processRequest(Request s) {
         return getHttpRequestHandler.processRequest(s);
     }
 
-    private Response handleGetBalanceRequest(Map<String, String> requestParams) {
+    private ResponseIF handleGetBalanceRequest(Map<String, String> requestParams) {
         var accountID = requestParams.get("account_id");
 
         if(accountID == null || accountID.isEmpty()){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return "Parameter account_id is not provided";
-                }
-
-                @Override
-                public int statusCode() {
-                    return BAD_REQUEST.getStatusCode();
-                }
-            };
+            return new Response("Parameter account_id is not provided", BAD_REQUEST);
         }
 
         try {
             var balance = accounts.getBalance(new AccountID(UUID.fromString(accountID)));
 
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return balance.toString();
-                }
+            return new Response(balance.toString(), OK);
 
-                @Override
-                public int statusCode() {
-                    return OK.getStatusCode();
-                }
-            };
-
-        } catch (Accounts.AccountException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.msg;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.code;
-                }
-            };
+        } catch (AccountException e) {
+            return new Response(e.msg, e.code);
         }
     }
 }

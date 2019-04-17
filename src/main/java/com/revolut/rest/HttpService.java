@@ -38,7 +38,7 @@ public class HttpService implements ExternalService {
     public void createEndpoint(String path, RequestProcessor processor) {
         final var endPoint = httpServer.createContext(path, new HttpRequest() {
             @Override
-            public Response processRequest(Request req) {
+            public ResponseIF processRequest(Request req) {
                 return processor.processRequest(req);
             }
         });

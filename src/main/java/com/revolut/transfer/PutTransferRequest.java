@@ -8,6 +8,7 @@ import com.revolut.rest.PutHttpRequest;
 import com.revolut.rest.Request;
 import com.revolut.rest.RequestProcessor;
 import com.revolut.rest.Response;
+import com.revolut.rest.ResponseIF;
 
 import java.util.Map;
 import java.util.UUID;
@@ -25,11 +26,11 @@ class PutTransferRequest implements RequestProcessor {
     }
 
     @Override
-    public Response processRequest(Request s) {
+    public ResponseIF processRequest(Request s) {
         return putHttpRequestHandler.processRequest(s);
     }
 
-    private Response handleCreationRequest(Map<String, String> requestParams) {
+    private ResponseIF handleCreationRequest(Map<String, String> requestParams) {
         var transactionID = requestParams.get("transaction_id");
         var fromAccountID = requestParams.get("from");
         var toAccountID = requestParams.get("to");
@@ -39,56 +40,17 @@ class PutTransferRequest implements RequestProcessor {
                 || toAccountID == null || amount == null
                 || transactionID.isEmpty() || fromAccountID.isEmpty()
                 || toAccountID.isEmpty() || amount.isEmpty())
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return "Parameters are in invalid format.";
-                }
+            return new Response("Parameters are in invalid format.", NOT_ACCEPTABLE_FORMAT);
 
-                @Override
-                public int statusCode() {
-                    return NOT_ACCEPTABLE_FORMAT.getStatusCode();
-                }
-            };
         final Transaction transaction;
         try {
             transaction = accounts.transfer(new TransactionID(UUID.fromString(transactionID)), new AccountID(UUID.fromString(fromAccountID)), new AccountID(UUID.fromString(toAccountID)), Money.parseMoney(amount));
         } catch (AccountException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.msg;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.code;
-                }
-            };
+            return new Response(e.msg, e.code);
         } catch (IllegalArgumentException e){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.getMessage();
-                }
-
-                @Override
-                public int statusCode() {
-                    return NOT_ACCEPTABLE_FORMAT.getStatusCode();
-                }
-            };
+            return new Response(e.getMessage(), NOT_ACCEPTABLE_FORMAT);
         }
 
-        return new Response() {
-            @Override
-            public String responseBody() {
-                return transaction.toString();
-            }
-
-            @Override
-            public int statusCode() {
-                return OK.getStatusCode();
-            }
-        };
+        return new Response(transaction.toString(), OK);
     }
 }

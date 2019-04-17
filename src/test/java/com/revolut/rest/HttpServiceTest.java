@@ -27,17 +27,7 @@ class HttpServiceTest {
 
         httpService.createEndpoint(endpointName, s -> {
             var params = URLDecoder.decode(s.getRequestURI().getRawQuery(), StandardCharsets.UTF_8);
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return params + " RESPONSE";
-                }
-
-                @Override
-                public int statusCode() {
-                    return OK.getStatusCode();
-                }
-            };
+            return new Response(params + " RESPONSE", OK);
         });
     }
 

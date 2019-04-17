@@ -1,11 +1,26 @@
 package com.revolut.rest;
 
-import com.sun.net.httpserver.Headers;
+public class Response implements ResponseIF {
+    private final String responseBody;
+    private final int statusCode;
 
-import java.io.OutputStream;
+    public Response(String responseBody, StatusCode statusCode){
+        this.responseBody = responseBody;
+        this.statusCode = statusCode.getStatusCode();
+    }
 
-public interface Response {
+    public Response(String responseBody, int statusCode){
+        this.responseBody = responseBody;
+        this.statusCode = statusCode;
+    }
 
-    String responseBody();
-    int statusCode();
+    @Override
+    public String responseBody() {
+        return this.responseBody;
+    }
+
+    @Override
+    public int statusCode() {
+        return this.statusCode;
+    }
 }

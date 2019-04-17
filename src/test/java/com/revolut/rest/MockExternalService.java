@@ -1,10 +1,5 @@
 package com.revolut.rest;
 
-import com.revolut.rest.ExternalService;
-import com.revolut.rest.Request;
-import com.revolut.rest.RequestProcessor;
-import com.revolut.rest.Response;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,21 +28,11 @@ public class MockExternalService implements ExternalService {
         mapOfServices.clear();
     }
 
-    public Response makeRequest(String path, Request requestParameters){
+    ResponseIF makeRequest(String path, Request requestParameters){
         if(!running)
             throw new IllegalStateException("Mock service is not running.");
 
-        var processor = mapOfServices.getOrDefault(path, s -> new Response() {
-            @Override
-            public String responseBody() {
-                return "Invalid method.";
-            }
-
-            @Override
-            public int statusCode() {
-                return NOT_FOUND.getStatusCode();
-            }
-        });
+        var processor = mapOfServices.getOrDefault(path, s -> new Response("Invalid method.", NOT_FOUND));
         return processor.processRequest(requestParameters);
     }
 }

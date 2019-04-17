@@ -9,9 +9,9 @@ import static com.revolut.rest.StatusCode.METHOD_NOT_ALLOWED;
 
 public class DeleteHttpRequest extends HttpRequest {
 
-    private final Function<Map<String, String>, Response> processRequest;
+    private final Function<Map<String, String>, ResponseIF> processRequest;
 
-    DeleteHttpRequest(Function<Map<String, String>, Response> processRequest) {
+    DeleteHttpRequest(Function<Map<String, String>, ResponseIF> processRequest) {
         this.processRequest = processRequest;
     }
 
@@ -33,23 +33,13 @@ public class DeleteHttpRequest extends HttpRequest {
     }
 
     @Override
-    public Response processRequest(Request request) {
+    public ResponseIF processRequest(Request request) {
         try{
             final var params = parseRawInput(request);
             final var paramsMap = extractParams(params);
             return processRequest.apply(paramsMap);
         } catch (HttpRequest.RequestException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.s;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.statusCode;
-                }
-            };
+            return new Response(e.s, e.statusCode);
         }
     }
 }

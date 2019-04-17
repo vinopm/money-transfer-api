@@ -2,6 +2,7 @@ package com.revolut.rest;
 
 import com.revolut.account.AccountID;
 import com.revolut.account.Accounts;
+import com.revolut.account.Accounts.AccountException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -19,53 +20,23 @@ public class DeleteAccountRequest implements RequestProcessor {
     }
 
     @Override
-    public Response processRequest(Request s) {
+    public ResponseIF processRequest(Request s) {
         return deleteHttpRequestHandler.processRequest(s);
     }
 
-    private Response handleDeleteRequest(Map<String, String> requestParams) {
-        String accountID = requestParams.get("account_id");
+    private ResponseIF handleDeleteRequest(Map<String, String> requestParams) {
+        var accountID = requestParams.get("account_id");
 
         if(accountID == null || accountID.isEmpty()){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return "Parameter account_id is not provided";
-                }
-
-                @Override
-                public int statusCode() {
-                    return BAD_REQUEST.getStatusCode();
-                }
-            };
+            return new Response("Parameter account_id is not provided", BAD_REQUEST);
         }
 
         try {
             accounts.deleteAccount(new AccountID(UUID.fromString(accountID)));
-        } catch (Accounts.AccountException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.msg;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.code;
-                }
-            };
+        } catch (AccountException e) {
+            return new Response(e.msg, e.code);
         }
 
-        return new Response() {
-            @Override
-            public String responseBody() {
-                return "Success.";
-            }
-
-            @Override
-            public int statusCode() {
-                return OK.getStatusCode();
-            }
-        };
+        return new Response("Success.", OK);
     }
 }

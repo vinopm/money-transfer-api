@@ -21,55 +21,25 @@ public class PutWithdrawAccountRequest implements RequestProcessor {
     }
 
     @Override
-    public Response processRequest(Request s) {
+    public ResponseIF processRequest(Request s) {
         return putHttpRequestHandler.processRequest(s);
     }
 
-    private Response handleWithdrawRequest(Map<String, String> params) {
+    private ResponseIF handleWithdrawRequest(Map<String, String> params) {
         var transactionID = params.get("transaction_id");
         var accountID = params.get("account_id");
         var amount = params.get("amount");
 
         if(transactionID == null || transactionID.isEmpty() || accountID == null || accountID.isEmpty() || amount == null || amount.isEmpty()){
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return "Parameter transaction_id/account_id/amount is not provided";
-                }
-
-                @Override
-                public int statusCode() {
-                    return BAD_REQUEST.getStatusCode();
-                }
-            };
+            return new Response("Parameter transaction_id/account_id/amount is not provided", BAD_REQUEST);
         }
 
         try {
             accounts.withdraw(new TransactionID(UUID.fromString(transactionID)), new AccountID(UUID.fromString(accountID)), Money.parseMoney(amount));
         } catch (Accounts.AccountException e) {
-            return new Response() {
-                @Override
-                public String responseBody() {
-                    return e.msg;
-                }
-
-                @Override
-                public int statusCode() {
-                    return e.code;
-                }
-            };
+            return new Response(e.msg, e.code);
         }
 
-        return new Response() {
-            @Override
-            public String responseBody() {
-                return "Success";
-            }
-
-            @Override
-            public int statusCode() {
-                return OK.getStatusCode();
-            }
-        };
+        return new Response("Success", OK);
     }
 }

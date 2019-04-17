@@ -1,5 +1,5 @@
 package com.revolut.rest;
 
 public interface RequestProcessor {
-    Response processRequest(Request s);
+    ResponseIF processRequest(Request s);
 }
