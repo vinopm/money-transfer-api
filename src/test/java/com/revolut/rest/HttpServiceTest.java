@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class HttpServiceTest {
     private HttpService httpService;
 
-    private final int port = 10000;
+    private final int port = 65458;
 
     private final String endpointName = "/endpoint";
 

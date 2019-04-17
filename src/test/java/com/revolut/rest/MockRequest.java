@@ -14,7 +14,7 @@ public class MockRequest implements Request {
     private String requestBody;
     private String method;
 
-    private static final int testPort = 10000;
+    private static final int testPort = 65458;
 
     MockRequest setQueryPath(String queryPath){
         this.queryPath = queryPath;
