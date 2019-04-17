@@ -14,8 +14,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AccountTest {
-
-    //test if creating same account again overwrites or keeps existing data.
     private final Accounts accounts = new Accounts();
 
     private AccountID accountID1;
