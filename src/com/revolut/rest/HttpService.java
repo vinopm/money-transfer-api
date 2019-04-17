@@ -16,7 +16,7 @@ public class HttpService implements ExternalService {
 
     HttpService(int port) throws IOException {
         this.httpServer = HttpServer.create(new InetSocketAddress(port), 0);
-        this.httpServer.setExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1));
+        this.httpServer.setExecutor(Executors.newWorkStealingPool());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> httpServer.stop(0)));
     }
 
