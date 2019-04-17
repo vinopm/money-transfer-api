@@ -1,5 +1,8 @@
 package com.revolut.account;
 
+import com.revolut.account.AccountID;
+import com.revolut.account.Accounts;
+import com.revolut.account.Money;
 import com.revolut.transfer.TransactionID;
 import org.junit.jupiter.api.Test;
 

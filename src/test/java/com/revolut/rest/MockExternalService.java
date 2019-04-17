@@ -1,5 +1,10 @@
 package com.revolut.rest;
 
+import com.revolut.rest.ExternalService;
+import com.revolut.rest.Request;
+import com.revolut.rest.RequestProcessor;
+import com.revolut.rest.Response;
+
 import java.util.HashMap;
 import java.util.Map;
 
