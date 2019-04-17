@@ -96,13 +96,26 @@ class HistoryTest {
     }
 
     @Test
-    void repeatTransactionIDTest() throws AccountException {
+    void repeatDepositTransactionIDTest() throws AccountException {
         accounts.transactions(accountID1);
 
         var transactionID = new TransactionID(UUID.randomUUID());
         var initialSize = accounts.transactions(accountID1).size();
         accounts.deposit(transactionID, accountID1, Money.parseMoney("10"));
         accounts.deposit(transactionID, accountID1, Money.parseMoney("10"));
+        var finalSize = accounts.transactions(accountID1).size();
+        assertEquals(initialSize + 1, finalSize);
+    }
+
+    @Test
+    void repeatWithdrawTransactionIDTest() throws AccountException {
+        accounts.transactions(accountID1);
+        accounts.deposit(new TransactionID(UUID.randomUUID()), accountID1, Money.parseMoney("10.00"));
+
+        var transactionID = new TransactionID(UUID.randomUUID());
+        var initialSize = accounts.transactions(accountID1).size();
+        accounts.withdraw(transactionID, accountID1, Money.parseMoney("10"));
+        accounts.withdraw(transactionID, accountID1, Money.parseMoney("10"));
         var finalSize = accounts.transactions(accountID1).size();
         assertEquals(initialSize + 1, finalSize);
     }

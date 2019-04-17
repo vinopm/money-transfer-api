@@ -137,6 +137,12 @@ public class Accounts {
         if(account == null)
             throw new AccountException("Account does not exist.", BAD_REQUEST.getStatusCode());
 
+        var alreadyExecuted = account.getTransaction(transactionID);
+
+        if(alreadyExecuted != null){
+            return;
+        }
+
         if(amount.compareTo(account.getBalance()) > 0)
             throw new AccountException("Account does not have sufficient funds to withdraw.", BAD_REQUEST.getStatusCode());
 
