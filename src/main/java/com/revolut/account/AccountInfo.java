@@ -10,11 +10,7 @@ import java.util.Map;
 
 class AccountInfo {
     private Money balance = new Money();
-    private final Map<TransactionID, Transaction> transactionsMap;
-
-    AccountInfo(){
-        this.transactionsMap = new LinkedHashMap<>();
-    }
+    private final Map<TransactionID, Transaction> transactionsMap = new LinkedHashMap<>();
 
     void add(Money amount){
         balance = this.balance.add(amount);

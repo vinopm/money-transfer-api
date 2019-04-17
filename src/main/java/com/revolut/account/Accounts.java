@@ -12,10 +12,6 @@ public class Accounts {
     private final Map<AccountID, AccountInfo> accounts = new ConcurrentHashMap<>();
     private final AccountsLock accountsLock = new AccountsLock();
 
-    public Accounts(){
-
-    }
-
     public void createAccount(AccountID accountID){
         accountsLock.lock(accountID);
 
