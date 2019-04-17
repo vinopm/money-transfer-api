@@ -43,8 +43,13 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>com.revolut.rest.RestfulService</mainClass>
+                    <executable>java</executable>
                     <arguments>
+                        <argument>-Xms2g</argument>
+                        <argument>-Xmx2g</argument>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>com.revolut.rest.RestfulService</argument>
                         <argument>65457</argument>
                     </arguments>
                 </configuration>
