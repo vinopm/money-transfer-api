@@ -34,8 +34,13 @@ RESTful Endpoints:
         - Required parameters:
             - account_id (UUID)
             
-    - Delete (/account/delete) accepts DELETE
+    - Delete (/account/delete) accepts DELETE (via URI)
         - Description: Endpoint to delete an account.
+        - Required parameters:
+            - account_id (UUID)
+    
+    - Balance (/account/balance) accepts GET
+        - Description: Endpoint to get current balance for specified account.
         - Required parameters:
             - account_id (UUID)
             
