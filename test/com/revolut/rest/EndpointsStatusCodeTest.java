@@ -23,7 +23,7 @@ public class EndpointsStatusCodeTest {
     private TransactionID transactionID;
     private AccountID fromID;
     private AccountID toID;
-    private float amount;
+    private String amount;
 
     @BeforeEach
     void setUp() throws IOException, Accounts.AccountException {
@@ -38,13 +38,13 @@ public class EndpointsStatusCodeTest {
         transactionID = new TransactionID(UUID.randomUUID());
         fromID = new AccountID(UUID.randomUUID());
         toID = new AccountID(UUID.randomUUID());
-        amount = 12.34F;
+        amount = "12.34";
 
         externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID));
         externalService.makeRequest("/account/create", new MockRequest().setMethod("PUT").setRequestBody("account_id="+toID));
 
-        float depositAmount = 100F;
-        externalService.makeRequest("/transfer/deposit", new MockRequest().setMethod("PUT").setRequestBody("account_id="+fromID+"&"+"amount="+depositAmount));
+        String depositAmount = "100.00";
+        externalService.makeRequest("/transfer/deposit", new MockRequest().setMethod("PUT").setRequestBody("transaction_id="+UUID.randomUUID().toString()+"&account_id="+fromID+"&"+"amount="+depositAmount));
     }
 
     @AfterEach
@@ -233,5 +233,62 @@ public class EndpointsStatusCodeTest {
 
         Response resp = externalService.makeRequest("/transfer/create", mockRequest);
         assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void transferInvalidTransactionIDTest(){
+        final String transactionID = "garbage-id";
+        Request mockRequest = new MockRequest()
+                .setMethod("PUT")
+                .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
+        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void transferInvalidAccountIDTest(){
+        final String fromID = "garbage-id";
+        Request mockRequest = new MockRequest()
+                .setMethod("PUT")
+                .setRequestBody("transaction_id="+transactionID+"&from="+fromID+"&to="+toID+"&amount=" + amount);
+        Response resp = externalService.makeRequest("/transfer/create", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void historyInvalidAccountIDTest(){
+        final String accountID = "garbage-id";
+        Request mockRequest = new MockRequest()
+                .setMethod("GET")
+                .setQueryPath("account_id="+accountID);
+        Response resp = externalService.makeRequest("/history", mockRequest);
+        assertEquals(NOT_ACCEPTABLE_FORMAT.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void withdrawTest(){
+        Request mockRequest = new MockRequest()
+                .setMethod("PUT")
+                .setRequestBody("transaction_id="+transactionID+"&account_id="+fromID+"&amount="+amount);
+        var resp = externalService.makeRequest("/transfer/withdraw", mockRequest);
+        assertEquals(OK.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void depositTest(){
+        Request mockRequest = new MockRequest()
+                .setMethod("PUT")
+                .setRequestBody("transaction_id="+transactionID+"&account_id="+fromID+"&amount="+amount);
+        var resp = externalService.makeRequest("/transfer/deposit", mockRequest);
+        assertEquals(OK.getStatusCode(), resp.statusCode());
+    }
+
+    @Test
+    void deleteAccountTest(){
+        Request mockRequest = new MockRequest()
+                .setMethod("DELETE")
+                .setQueryPath("/account/delete?account_id="+fromID);
+        var resp = externalService.makeRequest("/account/delete", mockRequest);
+        assertEquals(OK.getStatusCode(), resp.statusCode());
     }
 }

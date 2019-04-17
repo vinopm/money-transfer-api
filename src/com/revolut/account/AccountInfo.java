@@ -4,36 +4,27 @@ import com.revolut.transfer.Transaction;
 import com.revolut.transfer.TransactionID;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AccountInfo {
-    private float balance;
+class AccountInfo {
+    private Money balance = new Money();
     private final Map<TransactionID, Transaction> transactionsMap;
 
-    AccountInfo(float balance, Map<TransactionID, Transaction> transactionMap){
-        this.balance = balance;
-        this.transactionsMap = transactionMap;
-    }
-
     AccountInfo(){
-        this.transactionsMap = new HashMap<>();
+        this.transactionsMap = new LinkedHashMap<>();
     }
 
-    void add(float amount){
-        this.balance += amount;
+    void add(Money amount){
+        balance = this.balance.add(amount);
     }
 
-    void minus(float amount){
-        this.balance -= amount;
+    void minus(Money amount){
+        balance = this.balance.minus(amount);
     }
 
-    float getBalance(){
+    Money getBalance(){
         return balance;
-    }
-
-    boolean hasTransaction(TransactionID transactionID){
-        return transactionsMap.containsKey(transactionID);
     }
 
     Transaction getTransaction(TransactionID transactionID){

@@ -29,9 +29,9 @@ class AccountTest {
         accounts.createAccount(accountID2);
         accounts.createAccount(accountID3);
 
-        accounts.deposit(generateTransactionID(), accountID1, 50);
-        accounts.deposit(generateTransactionID(), accountID2, 50);
-        accounts.deposit(generateTransactionID(), accountID3, 50);
+        accounts.deposit(generateTransactionID(), accountID1, Money.parseMoney("50.00"));
+        accounts.deposit(generateTransactionID(), accountID2, Money.parseMoney("50.00"));
+        accounts.deposit(generateTransactionID(), accountID3, Money.parseMoney("50.00"));
     }
 
     @AfterEach
@@ -44,25 +44,25 @@ class AccountTest {
     @Test
     void negativeDepositTest() throws AccountException {
         var transactionID = generateTransactionID();
-        assertEquals(0, accounts.transactions(accountID1).size());
-        assertThrows(AccountException.class, () -> accounts.deposit(transactionID, accountID1, -50.00F));
-        assertEquals(0, accounts.transactions(accountID1).size());
+        assertEquals(1, accounts.transactions(accountID1).size());
+        assertThrows(AccountException.class, () -> accounts.deposit(transactionID, accountID1, Money.parseMoney("-50.00")));
+        assertEquals(1, accounts.transactions(accountID1).size());
     }
 
     @Test
     void negativeWithdrawTest() throws AccountException {
         var transactionID = generateTransactionID();
-        assertEquals(0, accounts.transactions(accountID1).size());
-        assertThrows(AccountException.class, () -> accounts.withdraw(transactionID, accountID1, -50.00F));
-        assertEquals(0, accounts.transactions(accountID1).size());
+        assertEquals(1, accounts.transactions(accountID1).size());
+        assertThrows(AccountException.class, () -> accounts.withdraw(transactionID, accountID1, Money.parseMoney("-50.00")));
+        assertEquals(1, accounts.transactions(accountID1).size());
     }
 
     @Test
     void insufficientFundsWithdrawTest() throws AccountException {
         var transactionID = generateTransactionID();
-        assertEquals(0, accounts.transactions(accountID1).size());
-        assertThrows(AccountException.class, () -> accounts.withdraw(transactionID, accountID1, 500.00F));
-        assertEquals(0, accounts.transactions(accountID1).size());
+        assertEquals(1, accounts.transactions(accountID1).size());
+        assertThrows(AccountException.class, () -> accounts.withdraw(transactionID, accountID1, Money.parseMoney("500.00")));
+        assertEquals(1, accounts.transactions(accountID1).size());
     }
 
     @Test
@@ -70,9 +70,15 @@ class AccountTest {
         var transactionID = generateTransactionID();
 
         var beforeBalance = accounts.getBalance(accountID1);
-        accounts.withdraw(transactionID, accountID1, 50.00F);
+        accounts.withdraw(transactionID, accountID1, Money.parseMoney("50.00"));
         var afterBalance = accounts.getBalance(accountID1);
-        assertEquals(beforeBalance, afterBalance + 50F);
+        assertEquals(beforeBalance, afterBalance.add(Money.parseMoney("50.00")));
+    }
+
+    @Test
+    void depositToNonExistentAccount() {
+        var accountID = new AccountID(UUID.randomUUID());
+        assertThrows(AccountException.class, () -> accounts.deposit(generateTransactionID(), accountID, Money.parseMoney("10.00")));
     }
 
     @Test
@@ -80,9 +86,9 @@ class AccountTest {
         var transactionID = generateTransactionID();
 
         var beforeBalance = accounts.getBalance(accountID1);
-        accounts.deposit(transactionID, accountID1, 50.00F);
+        accounts.deposit(transactionID, accountID1, Money.parseMoney("50.00"));
         var afterBalance = accounts.getBalance(accountID1);
-        assertEquals(beforeBalance, afterBalance - 50F);
+        assertEquals(beforeBalance, afterBalance.minus(Money.parseMoney("50.00")));
     }
 
     @Test
@@ -96,6 +102,23 @@ class AccountTest {
         assertTrue(afterTransactions.containsAll(beforeTransactions));
     }
 
+    @Test
+    void getTransactionsFromNonexistentAccount(){
+        var accountID = new AccountID(UUID.randomUUID());
+        assertThrows(AccountException.class, () -> accounts.transactions(accountID));
+    }
+
+    @Test
+    void transferFromNonexistentAccount(){
+        var accountID = new AccountID(UUID.randomUUID());
+        assertThrows(AccountException.class, () -> accounts.transfer(generateTransactionID(), accountID1, accountID, Money.parseMoney("10.00")));
+    }
+
+    @Test
+    void transferFromAndToSameAccount(){
+        assertThrows(AccountException.class, () -> accounts.transfer(generateTransactionID(), accountID1, accountID1, Money.parseMoney("10.00")));
+    }
+
     private AccountID copyAccountID(AccountID accountID){
         return new AccountID(UUID.fromString(accountID.toString()));
     }
@@ -107,14 +130,14 @@ class AccountTest {
         var account1Balance = accounts.getBalance(accountID1);
         var account2Balance = accounts.getBalance(accountID2);
 
-        accounts.transfer(transactionID, accountID1, accountID2, 25.00F);
-        accounts.transfer(transactionID, accountID1, accountID2, 25.00F);
+        accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("25.00"));
+        accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("25.00"));
 
         var account1BalanceAfter = accounts.getBalance(accountID1);
         var account2BalanceAfter = accounts.getBalance(accountID2);
 
-        assertEquals(account1Balance, account1BalanceAfter + 25.00F);
-        assertEquals(account2Balance, account2BalanceAfter - 25.00F);
+        assertEquals(account1Balance, account1BalanceAfter.add(Money.parseMoney("25.00")));
+        assertEquals(account2Balance, account2BalanceAfter.minus(Money.parseMoney("25.00")));
     }
 
     @Test
@@ -123,11 +146,11 @@ class AccountTest {
 
         var account1Balance = accounts.getBalance(accountID1);
 
-        accounts.withdraw(transactionID, accountID1, 25.00F);
+        accounts.withdraw(transactionID, accountID1, Money.parseMoney("25.00"));
 
         var account1BalanceAfter = accounts.getBalance(accountID1);
 
-        assertEquals(account1Balance, account1BalanceAfter + 25.00F);
+        assertEquals(account1Balance, account1BalanceAfter.add(Money.parseMoney("25.00")));
     }
 
     @Test
@@ -135,17 +158,17 @@ class AccountTest {
         var transactionID = generateTransactionID();
         var account1Balance = accounts.getBalance(accountID1);
 
-        accounts.deposit(transactionID, accountID1, 25.00F);
+        accounts.deposit(transactionID, accountID1, Money.parseMoney("25.00"));
 
         var account1BalanceAfter = accounts.getBalance(accountID1);
 
-        assertEquals(account1Balance, account1BalanceAfter - 25.00F);
+        assertEquals(account1Balance, account1BalanceAfter.minus(Money.parseMoney("25.00")));
     }
 
     @Test
     void tooLargeTransferTest() {
         var transactionID = generateTransactionID();
-        assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, 500.00F));
+        assertThrows(AccountException.class, () -> accounts.transfer(transactionID, accountID1, accountID2, Money.parseMoney("500.00")));
     }
 
     public TransactionID generateTransactionID(){
@@ -154,12 +177,16 @@ class AccountTest {
     }
 
     @Test
-    void deleteAccountWhichExists(){
-
+    void deleteAccountWhichDoesNotExist() {
+        var accountID = new AccountID(UUID.randomUUID());
+        assertThrows(AccountException.class, () -> accounts.deleteAccount(accountID));
     }
 
     @Test
-    void deleteAccountWhichDoesNotExist(){
-
+    void deleteAccountWhichExists() throws AccountException {
+        var accountID = new AccountID(UUID.randomUUID());
+        accounts.createAccount(accountID);
+        accounts.deleteAccount(accountID);
+        assertThrows(AccountException.class, () -> accounts.getBalance(accountID));
     }
 }

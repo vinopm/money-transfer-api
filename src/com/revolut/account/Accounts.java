@@ -1,7 +1,6 @@
 package com.revolut.account;
 
-import com.revolut.transfer.Transaction;
-import com.revolut.transfer.TransactionID;
+import com.revolut.transfer.*;
 
 import java.util.Collection;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class Accounts {
 
     }
 
-    public Transaction transfer(TransactionID transactionID, AccountID from, AccountID to, float amount) throws AccountException {
+    public Transaction transfer(TransactionID transactionID, AccountID from, AccountID to, Money amount) throws AccountException {
         accountsLock.lock(from, to);
 
         try{
@@ -66,12 +65,12 @@ public class Accounts {
 
             //check if from account has enough funds for transfer
             var fromAmount = fromAccountInfo.getBalance();
-            if(amount > fromAmount){
+            if(amount.compareTo(fromAmount) > 0){
                 throw new AccountException("Account does not have enough funds for transfer.", BAD_REQUEST.getStatusCode());
             }
 
             //execute the transfer
-            var newTransaction = new Transaction(transactionID, from, to, amount);
+            var newTransaction = new TransferTransaction(transactionID, from, to, amount);
             fromAccountInfo.addNewTransaction(transactionID, newTransaction);
             fromAccountInfo.minus(amount);
             toAccountInfo.addNewTransaction(transactionID, newTransaction);
@@ -82,8 +81,9 @@ public class Accounts {
         }
     }
 
-    public void deposit(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
-        if(amount <= 0){
+    public void deposit(TransactionID transactionID, AccountID accountID, Money amount) throws AccountException {
+        final var zeroMoney = new Money("0.00");
+        if(amount.compareTo(zeroMoney) <= 0){
             throw new AccountException("Deposit amount must be greater than 0", BAD_REQUEST.getStatusCode());
         }
 
@@ -97,7 +97,7 @@ public class Accounts {
         }
     }
 
-    private void depositWithoutLocking(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+    private void depositWithoutLocking(TransactionID transactionID, AccountID accountID, Money amount) throws AccountException {
         var account = accounts.get(accountID);
 
         if(account == null)
@@ -110,10 +110,14 @@ public class Accounts {
         }
 
         account.add(amount);
+
+        var newTransaction = new DepositTransaction(transactionID, accountID, amount);
+        account.addNewTransaction(transactionID, newTransaction);
     }
 
-    public void withdraw(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
-        if(amount <= 0){
+    public void withdraw(TransactionID transactionID, AccountID accountID, Money amount) throws AccountException {
+        final var zeroMoney = new Money("0.00");
+        if(amount.compareTo(zeroMoney) <= 0){
             throw new AccountException("Withdraw amount must be greater than 0", BAD_REQUEST.getStatusCode());
         }
 
@@ -127,16 +131,19 @@ public class Accounts {
         }
     }
 
-    private void withdrawWithoutLocking(TransactionID transactionID, AccountID accountID, float amount) throws AccountException {
+    private void withdrawWithoutLocking(TransactionID transactionID, AccountID accountID, Money amount) throws AccountException {
         AccountInfo account = accounts.get(accountID);
 
         if(account == null)
             throw new AccountException("Account does not exist.", BAD_REQUEST.getStatusCode());
 
-        if(amount > getBalance(accountID))
+        if(amount.compareTo(account.getBalance()) > 0)
             throw new AccountException("Account does not have sufficient funds to withdraw.", BAD_REQUEST.getStatusCode());
 
         account.minus(amount);
+
+        var newTransaction = new WithdrawTransaction(transactionID, accountID, amount);
+        account.addNewTransaction(transactionID, newTransaction);
     }
 
     public void deleteAccount(AccountID accountID) throws AccountException {
@@ -147,14 +154,13 @@ public class Accounts {
             if(account == null)
                 throw new AccountException("Account does not exist", BAD_REQUEST.getStatusCode());
 
-            //@TODO
-//            accounts.remove(accountID);
+            accounts.remove(accountID);
         }finally {
             accountsLock.unlock(accountID);
         }
     }
 
-    float getBalance(AccountID accountID) throws AccountException {
+    Money getBalance(AccountID accountID) throws AccountException {
         accountsLock.lock(accountID);
         try{
             AccountInfo account = accounts.get(accountID);

@@ -2,6 +2,7 @@ package com.revolut.rest;
 
 import com.revolut.account.AccountID;
 import com.revolut.account.Accounts;
+import com.revolut.account.Money;
 import com.revolut.transfer.TransactionID;
 
 import java.util.Map;
@@ -44,7 +45,7 @@ public class PutWithdrawAccountRequest implements RequestProcessor {
         }
 
         try {
-            accounts.withdraw(new TransactionID(UUID.fromString(transactionID)), new AccountID(UUID.fromString(accountID)), Float.parseFloat(amount));
+            accounts.withdraw(new TransactionID(UUID.fromString(transactionID)), new AccountID(UUID.fromString(accountID)), Money.parseMoney(amount));
         } catch (Accounts.AccountException e) {
             return new Response() {
                 @Override
