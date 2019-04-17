@@ -12,4 +12,17 @@ public class TransactionID {
     public String toString() {
         return id.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TransactionID)) return false;
+        var that = (TransactionID) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
 }

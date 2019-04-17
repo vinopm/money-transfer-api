@@ -33,6 +33,6 @@ class AccountInfo {
     }
 
     void addNewTransaction(TransactionID id, Transaction transaction){
-        transactionsMap.put(id, transaction);
+        transactionsMap.putIfAbsent(id, transaction);
     }
 }
